@@ -82,7 +82,7 @@ function createSticker(initialX: number, initialY: number, sticker: string): Dra
 
   return {
     display(ctx: CanvasRenderingContext2D) {
-      ctx.font = "30px Arial";
+      ctx.font = "40px Arial"; // Increased font size for stickers
       ctx.fillText(sticker, posX, posY);
     },
     drag(x: number, y: number) {
@@ -196,6 +196,10 @@ redoButton.addEventListener("click", () => {
   }
 });
 
+// Update the currentThickness for better user experience
+const thinMarkerThickness = 4; // Change to a thicker line for the thin marker
+const thickMarkerThickness = 8; // Change to a thicker line for the thick marker
+
 // Adding marker tool buttons for thin and thick markers
 const thinMarkerButton = document.createElement("button");
 thinMarkerButton.innerText = "Thin Marker";
@@ -209,17 +213,19 @@ app.appendChild(thickMarkerButton);
 
 // Function to select the thin marker
 thinMarkerButton.addEventListener("click", () => {
-  currentThickness = 2; // Set thickness for thin marker
+  currentThickness = thinMarkerThickness; // Set thickness for thin marker
   currentSticker = null; // Disable sticker mode
   selectTool(thinMarkerButton); // Update CSS to show it's selected
 });
 
 // Function to select the thick marker
 thickMarkerButton.addEventListener("click", () => {
-  currentThickness = 6; // Set thickness for thick marker
+  currentThickness = thickMarkerThickness; // Set thickness for thick marker
   currentSticker = null; // Disable sticker mode
   selectTool(thickMarkerButton); // Update CSS to show it's selected
 });
+
+
 
 // Helper function to apply the selectedTool class to the active tool
 function selectTool(selectedButton: HTMLButtonElement) {

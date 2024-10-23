@@ -38,7 +38,7 @@ h1 {
 }
 
 #sketchpad {
-  border: 2px solid black; /* Thin black border */
+  border: 2px solid #000; /* Thin black border */
   border-radius: 10px;     /* Rounded corners */
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5); /* Subtle drop shadow */
   margin-top: 20px; /* Space between title and canvas */
@@ -57,16 +57,33 @@ button {
   font-weight: 500;
   background-color: #1a1a1a;
   cursor: pointer;
-  transition: border-color 0.25s;
+  transition: border-color 0.25s, background-color 0.25s, transform 0.1s; /* Transition for hover effects */
   margin: 10px;
 }
+
 button:hover {
   border-color: #646cff;
+  background-color: #292929; /* Darker background on hover */
+  transform: scale(1.05); /* Slight scale effect on hover */
 }
 
 .selectedTool {
   background-color: #646cff;
   color: white;
+  box-shadow: 0 0 10px rgba(100, 108, 255, 0.5); /* Glow effect for selected tool */
+}
+
+.sticker-btn {
+  border: none;
+  background: none;
+  color: #ffffff;
+  font-size: 1.5em; /* Larger font size for stickers */
+  cursor: pointer;
+  transition: transform 0.1s; /* Transition for hover effect */
+}
+
+.sticker-btn:hover {
+  transform: scale(1.1); /* Slight scale effect on hover */
 }
 
 @media (prefers-color-scheme: light) {
@@ -76,5 +93,14 @@ button:hover {
   }
   button {
     background-color: #f9f9f9;
+    border-color: #ddd; /* Lighter border for light mode */
+  }
+  .selectedTool {
+    background-color: #646cff;
+    color: white;
+    box-shadow: 0 0 10px rgba(100, 108, 255, 0.5);
+  }
+  .sticker-btn {
+    color: #213547; /* Dark text for stickers in light mode */
   }
 }
