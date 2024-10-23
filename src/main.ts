@@ -26,6 +26,7 @@ let redoStack: Drawable[] = [];
 
 let isDrawing = false;
 let currentDrawable: Drawable | null = null;
+let toolPreview: Drawable | null = null; // Global variable for tool preview
 
 // Global variable to store the current marker thickness
 let currentThickness = 2; // Default to "thin"
@@ -60,6 +61,19 @@ function createMarkerLine(initialX: number, initialY: number, thickness: number)
   };
 }
 
+// Function to create a tool preview (a circle showing the size of the marker)
+function createToolPreview(x: number, y: number, thickness: number): Drawable {
+  return {
+    display(ctx: CanvasRenderingContext2D) {
+      ctx.beginPath();
+      ctx.arc(x, y, thickness / 2, 0, 2 * Math.PI);
+      ctx.strokeStyle = "#646cff";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  };
+}
+
 // Function to start drawing
 function startDrawing(event: MouseEvent) {
   isDrawing = true;
@@ -82,9 +96,22 @@ function stopDrawing() {
   redoStack = []; // Clear the redo stack when a new action is performed
 }
 
-// Mouse events to control drawing
+// Function to update tool preview based on mouse movement
+function updateToolPreview(event: MouseEvent) {
+  if (isDrawing) {
+    toolPreview = null; // No preview when drawing
+  } else {
+    toolPreview = createToolPreview(event.offsetX, event.offsetY, currentThickness);
+  }
+  canvas.dispatchEvent(new Event("drawing-changed"));
+}
+
+// Mouse events to control drawing and tool preview
 canvas.addEventListener("mousedown", startDrawing);
-canvas.addEventListener("mousemove", draw);
+canvas.addEventListener("mousemove", (event) => {
+  draw(event);
+  updateToolPreview(event); // Update tool preview when moving the mouse
+});
 canvas.addEventListener("mouseup", stopDrawing);
 canvas.addEventListener("mouseout", stopDrawing);
 
@@ -96,6 +123,11 @@ canvas.addEventListener("drawing-changed", () => {
   strokes.forEach((drawable) => {
     drawable.display(ctx); // Use the display method to draw each stroke
   });
+
+  // Draw the tool preview if available
+  if (toolPreview) {
+    toolPreview.display(ctx);
+  }
 });
 
 // Add a clear button
