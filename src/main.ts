@@ -27,6 +27,7 @@ let redoStack: Drawable[] = [];
 let isDrawing = false;
 let currentDrawable: Drawable | null = null;
 let toolPreview: Drawable | null = null; // Global variable for tool preview
+let currentSticker: string | null = null; // Global variable to track if sticker is selected
 
 // Global variable to store the current marker thickness
 let currentThickness = 2; // Default to "thin"
@@ -74,17 +75,38 @@ function createToolPreview(x: number, y: number, thickness: number): Drawable {
   };
 }
 
+// Function to create a sticker command (for dragging and placing stickers)
+function createSticker(initialX: number, initialY: number, sticker: string): Drawable {
+  let posX = initialX;
+  let posY = initialY;
+
+  return {
+    display(ctx: CanvasRenderingContext2D) {
+      ctx.font = "30px Arial";
+      ctx.fillText(sticker, posX, posY);
+    },
+    drag(x: number, y: number) {
+      posX = x;
+      posY = y;
+    }
+  };
+}
+
 // Function to start drawing
 function startDrawing(event: MouseEvent) {
   isDrawing = true;
-  currentDrawable = createMarkerLine(event.offsetX, event.offsetY, currentThickness);
-  strokes.push(currentDrawable); // Add the current line to strokes
+  if (currentSticker) {
+    currentDrawable = createSticker(event.offsetX, event.offsetY, currentSticker); // Sticker tool
+  } else {
+    currentDrawable = createMarkerLine(event.offsetX, event.offsetY, currentThickness); // Marker tool
+  }
+  strokes.push(currentDrawable); // Add the current drawable to strokes
 }
 
 // Function to draw and extend the current stroke
 function draw(event: MouseEvent) {
   if (!isDrawing || !currentDrawable) return;
-  currentDrawable.drag!(event.offsetX, event.offsetY); // Call the drag method to extend
+  currentDrawable.drag!(event.offsetX, event.offsetY); // Call the drag method to extend or move
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
 
@@ -100,8 +122,10 @@ function stopDrawing() {
 function updateToolPreview(event: MouseEvent) {
   if (isDrawing) {
     toolPreview = null; // No preview when drawing
+  } else if (currentSticker) {
+    toolPreview = createSticker(event.offsetX, event.offsetY, currentSticker); // Sticker preview
   } else {
-    toolPreview = createToolPreview(event.offsetX, event.offsetY, currentThickness);
+    toolPreview = createToolPreview(event.offsetX, event.offsetY, currentThickness); // Marker preview
   }
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
@@ -186,21 +210,48 @@ app.appendChild(thickMarkerButton);
 // Function to select the thin marker
 thinMarkerButton.addEventListener("click", () => {
   currentThickness = 2; // Set thickness for thin marker
+  currentSticker = null; // Disable sticker mode
   selectTool(thinMarkerButton); // Update CSS to show it's selected
 });
 
 // Function to select the thick marker
 thickMarkerButton.addEventListener("click", () => {
   currentThickness = 6; // Set thickness for thick marker
+  currentSticker = null; // Disable sticker mode
   selectTool(thickMarkerButton); // Update CSS to show it's selected
 });
 
 // Helper function to apply the selectedTool class to the active tool
 function selectTool(selectedButton: HTMLButtonElement) {
-  // Remove the selectedTool class from both buttons
+  // Remove the selectedTool class from all buttons
   thinMarkerButton.classList.remove("selectedTool");
   thickMarkerButton.classList.remove("selectedTool");
 
   // Add the selectedTool class to the currently selected button
   selectedButton.classList.add("selectedTool");
 }
+
+// Stickers preview helper function
+function selectStickerTool(stickerButton: HTMLButtonElement, sticker: string) {
+  // Reset tool preview
+  currentSticker = sticker;
+  toolPreview = null;
+
+  // Remove the selectedTool class from marker buttons
+  thinMarkerButton.classList.remove("selectedTool");
+  thickMarkerButton.classList.remove("selectedTool");
+
+  // Add the selectedTool class to the selected sticker button
+  stickerButton.classList.add("selectedTool");
+}
+
+// Adding sticker buttons for three different emojis
+const stickers = ["🌟", "🎈", "🍀"];
+stickers.forEach((sticker) => {
+  const stickerButton = document.createElement("button");
+  stickerButton.innerText = sticker;
+  stickerButton.addEventListener("click", () => {
+    selectStickerTool(stickerButton, sticker); // Select the sticker tool
+  });
+  app.appendChild(stickerButton);
+});
