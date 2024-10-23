@@ -20,41 +20,63 @@ app.appendChild(canvas);
 // Get the canvas context to draw
 const ctx = canvas.getContext("2d")!;
 
-// Initialize the arrays to store strokes and redoStack (each stroke is an array of points)
-let strokes: { x: number; y: number }[][] = [];
-let redoStack: { x: number; y: number }[][] = [];
-let currentStroke: { x: number; y: number }[] = [];
+// Initialize the arrays to store strokes and redoStack (each stroke is a Drawable object)
+let strokes: Drawable[] = [];
+let redoStack: Drawable[] = [];
 
 let isDrawing = false;
+let currentDrawable: Drawable | null = null;
+
+// Define the Drawable interface to include display and drag methods
+interface Drawable {
+  display(ctx: CanvasRenderingContext2D): void;
+  drag?(x: number, y: number): void; // Optional method for dragging (extending the line)
+}
+
+// Function to create a marker line object that conforms to Drawable interface
+function createMarkerLine(initialX: number, initialY: number): Drawable {
+  let points = [{ x: initialX, y: initialY }];
+
+  return {
+    display(ctx: CanvasRenderingContext2D) {
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    },
+    drag(x: number, y: number) {
+      points.push({ x, y });
+    }
+  };
+}
 
 // Function to start drawing
 function startDrawing(event: MouseEvent) {
   isDrawing = true;
-  currentStroke = [{ x: event.offsetX, y: event.offsetY }];
+  currentDrawable = createMarkerLine(event.offsetX, event.offsetY);
+  strokes.push(currentDrawable); // Add the current line to strokes
 }
 
-// Function to draw on the canvas and save the current stroke's points
+// Function to draw and extend the current stroke
 function draw(event: MouseEvent) {
-  if (!isDrawing) return;
-
-  const point = { x: event.offsetX, y: event.offsetY };
-  currentStroke.push(point);
-
-  // Dispatch a custom event whenever a drawing change occurs
-  const eventChanged = new Event("drawing-changed");
-  canvas.dispatchEvent(eventChanged);
+  if (!isDrawing || !currentDrawable) return;
+  currentDrawable.drag!(event.offsetX, event.offsetY); // Call the drag method to extend
+  canvas.dispatchEvent(new Event("drawing-changed"));
 }
 
 // Function to stop drawing
 function stopDrawing() {
   if (!isDrawing) return;
-
   isDrawing = false;
-  strokes.push(currentStroke); // Save the finished stroke into strokes array
-  currentStroke = [];
-
-  // Clear the redo stack since we've added a new action
-  redoStack = [];
+  currentDrawable = null; // Reset currentDrawable
+  redoStack = []; // Clear the redo stack when a new action is performed
 }
 
 // Mouse events to control drawing
@@ -68,34 +90,9 @@ canvas.addEventListener("drawing-changed", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
 
   // Redraw each stroke
-  strokes.forEach((stroke) => {
-    ctx.beginPath();
-    stroke.forEach((point, index) => {
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
-    });
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  strokes.forEach((drawable) => {
+    drawable.display(ctx); // Use the display method to draw each stroke
   });
-
-  // Draw the current stroke that is still being drawn
-  if (currentStroke.length > 0) {
-    ctx.beginPath();
-    currentStroke.forEach((point, index) => {
-      if (index === 0) {
-        ctx.moveTo(point.x, point.y);
-      } else {
-        ctx.lineTo(point.x, point.y);
-      }
-    });
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
 });
 
 // Add a clear button
