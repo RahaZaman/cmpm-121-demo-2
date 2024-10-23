@@ -27,6 +27,9 @@ let redoStack: Drawable[] = [];
 let isDrawing = false;
 let currentDrawable: Drawable | null = null;
 
+// Global variable to store the current marker thickness
+let currentThickness = 2; // Default to "thin"
+
 // Define the Drawable interface to include display and drag methods
 interface Drawable {
   display(ctx: CanvasRenderingContext2D): void;
@@ -34,7 +37,7 @@ interface Drawable {
 }
 
 // Function to create a marker line object that conforms to Drawable interface
-function createMarkerLine(initialX: number, initialY: number): Drawable {
+function createMarkerLine(initialX: number, initialY: number, thickness: number): Drawable {
   let points = [{ x: initialX, y: initialY }];
 
   return {
@@ -48,7 +51,7 @@ function createMarkerLine(initialX: number, initialY: number): Drawable {
         }
       });
       ctx.strokeStyle = "#000";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = thickness;
       ctx.stroke();
     },
     drag(x: number, y: number) {
@@ -60,7 +63,7 @@ function createMarkerLine(initialX: number, initialY: number): Drawable {
 // Function to start drawing
 function startDrawing(event: MouseEvent) {
   isDrawing = true;
-  currentDrawable = createMarkerLine(event.offsetX, event.offsetY);
+  currentDrawable = createMarkerLine(event.offsetX, event.offsetY, currentThickness);
   strokes.push(currentDrawable); // Add the current line to strokes
 }
 
@@ -136,3 +139,36 @@ redoButton.addEventListener("click", () => {
     canvas.dispatchEvent(new Event("drawing-changed")); // Redraw
   }
 });
+
+// Adding marker tool buttons for thin and thick markers
+const thinMarkerButton = document.createElement("button");
+thinMarkerButton.innerText = "Thin Marker";
+thinMarkerButton.id = "thin-marker-btn";
+app.appendChild(thinMarkerButton);
+
+const thickMarkerButton = document.createElement("button");
+thickMarkerButton.innerText = "Thick Marker";
+thickMarkerButton.id = "thick-marker-btn";
+app.appendChild(thickMarkerButton);
+
+// Function to select the thin marker
+thinMarkerButton.addEventListener("click", () => {
+  currentThickness = 2; // Set thickness for thin marker
+  selectTool(thinMarkerButton); // Update CSS to show it's selected
+});
+
+// Function to select the thick marker
+thickMarkerButton.addEventListener("click", () => {
+  currentThickness = 6; // Set thickness for thick marker
+  selectTool(thickMarkerButton); // Update CSS to show it's selected
+});
+
+// Helper function to apply the selectedTool class to the active tool
+function selectTool(selectedButton: HTMLButtonElement) {
+  // Remove the selectedTool class from both buttons
+  thinMarkerButton.classList.remove("selectedTool");
+  thickMarkerButton.classList.remove("selectedTool");
+
+  // Add the selectedTool class to the currently selected button
+  selectedButton.classList.add("selectedTool");
+}

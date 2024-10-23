@@ -64,6 +64,11 @@ button:hover {
   border-color: #646cff;
 }
 
+.selectedTool {
+  background-color: #646cff;
+  color: white;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
