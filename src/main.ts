@@ -29,18 +29,17 @@ let currentDrawable: Drawable | null = null;
 let toolPreview: Drawable | null = null; // Global variable for tool preview
 let currentSticker: string | null = null; // Global variable to track if a sticker is selected
 
-// Global variable to store the current marker thickness
 let currentThickness = 2; // Default to "thin"
+let currentColorHue = 0; // Default color hue at 0°
 
-// Define the Drawable interface to include display and drag methods
 interface Drawable {
   display(ctx: CanvasRenderingContext2D): void;
-  drag?(x: number, y: number): void; // Optional method for dragging (extending the line)
+  drag?(x: number, y: number): void;
 }
 
-// Function to create a marker line object that conforms to Drawable interface
-function createMarkerLine(initialX: number, initialY: number, thickness: number): Drawable {
-  let points = [{ x: initialX, y: initialY }];
+function createMarkerLine(initialX: number, initialY: number, thickness: number, hue: number): Drawable {
+  const points = [{ x: initialX, y: initialY }];
+  const color = `hsl(${hue}, 100%, 40%)`; // HSL color model for the marker
 
   return {
     display(ctx: CanvasRenderingContext2D) {
@@ -52,7 +51,7 @@ function createMarkerLine(initialX: number, initialY: number, thickness: number)
           ctx.lineTo(point.x, point.y);
         }
       });
-      ctx.strokeStyle = "#000";
+      ctx.strokeStyle = color;
       ctx.lineWidth = thickness;
       ctx.stroke();
     },
@@ -62,27 +61,25 @@ function createMarkerLine(initialX: number, initialY: number, thickness: number)
   };
 }
 
-// Function to create a tool preview (a circle showing the size of the marker)
-function createToolPreview(x: number, y: number, thickness: number): Drawable {
+function createToolPreview(x: number, y: number, thickness: number, hue: number): Drawable {
   return {
     display(ctx: CanvasRenderingContext2D) {
       ctx.beginPath();
       ctx.arc(x, y, thickness / 2, 0, 2 * Math.PI);
-      ctx.strokeStyle = "#646cff";
+      ctx.strokeStyle = `hsl(${hue}, 100%, 40%)`;
       ctx.lineWidth = 2;
       ctx.stroke();
     }
   };
 }
 
-// Function to create a sticker command (for dragging and placing stickers)
 function createSticker(initialX: number, initialY: number, sticker: string): Drawable {
   let posX = initialX;
   let posY = initialY;
 
   return {
     display(ctx: CanvasRenderingContext2D) {
-      ctx.font = "40px Arial"; // Increased font size for stickers
+      ctx.font = "40px Arial";
       ctx.fillText(sticker, posX, posY);
     },
     drag(x: number, y: number) {
@@ -92,179 +89,153 @@ function createSticker(initialX: number, initialY: number, sticker: string): Dra
   };
 }
 
-// Function to start drawing
 function startDrawing(event: MouseEvent) {
   isDrawing = true;
   if (currentSticker) {
-    currentDrawable = createSticker(event.offsetX, event.offsetY, currentSticker); // Sticker tool
+    currentDrawable = createSticker(event.offsetX, event.offsetY, currentSticker);
   } else {
-    currentDrawable = createMarkerLine(event.offsetX, event.offsetY, currentThickness); // Marker tool
+    currentDrawable = createMarkerLine(event.offsetX, event.offsetY, currentThickness, currentColorHue);
   }
-  strokes.push(currentDrawable); // Add the current drawable to strokes
+  strokes.push(currentDrawable);
 }
 
-// Function to draw and extend the current stroke
 function draw(event: MouseEvent) {
   if (!isDrawing || !currentDrawable) return;
-  currentDrawable.drag!(event.offsetX, event.offsetY); // Call the drag method to extend or move
+  currentDrawable.drag!(event.offsetX, event.offsetY);
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
 
-// Function to stop drawing
 function stopDrawing() {
   if (!isDrawing) return;
   isDrawing = false;
-  currentDrawable = null; // Reset currentDrawable
-  redoStack = []; // Clear the redo stack when a new action is performed
+  currentDrawable = null;
+  redoStack = [];
 }
 
-// Function to update tool preview based on mouse movement
 function updateToolPreview(event: MouseEvent) {
   if (isDrawing) {
-    toolPreview = null; // No preview when drawing
+    toolPreview = null;
   } else if (currentSticker) {
-    toolPreview = createSticker(event.offsetX, event.offsetY, currentSticker); // Sticker preview
+    toolPreview = createSticker(event.offsetX, event.offsetY, currentSticker);
   } else {
-    toolPreview = createToolPreview(event.offsetX, event.offsetY, currentThickness); // Marker preview
+    toolPreview = createToolPreview(event.offsetX, event.offsetY, currentThickness, currentColorHue);
   }
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
 
-// Mouse events to control drawing and tool preview
 canvas.addEventListener("mousedown", startDrawing);
 canvas.addEventListener("mousemove", (event) => {
   draw(event);
-  updateToolPreview(event); // Update tool preview when moving the mouse
+  updateToolPreview(event);
 });
 canvas.addEventListener("mouseup", stopDrawing);
 canvas.addEventListener("mouseout", stopDrawing);
 
-// Redraw the canvas whenever the 'drawing-changed' event is triggered
 canvas.addEventListener("drawing-changed", () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
-
-  // Redraw each stroke
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   strokes.forEach((drawable) => {
-    drawable.display(ctx); // Use the display method to draw each stroke
+    drawable.display(ctx);
   });
-
-  // Draw the tool preview if available
   if (toolPreview) {
     toolPreview.display(ctx);
   }
 });
 
-// Add a clear button
 const clearButton = document.createElement("button");
 clearButton.innerText = "Clear";
-clearButton.id = "clear-btn";
 app.appendChild(clearButton);
 
-// Function to clear the canvas and reset the strokes
 clearButton.addEventListener("click", () => {
-  strokes = []; // Clear the strokes array
-  redoStack = []; // Clear the redo stack
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+  strokes = [];
+  redoStack = [];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
 
-// Adding Undo and Redo buttons
 const undoButton = document.createElement("button");
 undoButton.innerText = "Undo";
-undoButton.id = "undo-btn";
 app.appendChild(undoButton);
 
 const redoButton = document.createElement("button");
 redoButton.innerText = "Redo";
-redoButton.id = "redo-btn";
 app.appendChild(redoButton);
 
-// Undo button functionality
 undoButton.addEventListener("click", () => {
   if (strokes.length > 0) {
-    const lastStroke = strokes.pop(); // Remove the most recent stroke
-    redoStack.push(lastStroke!); // Push it to the redo stack
-    canvas.dispatchEvent(new Event("drawing-changed")); // Redraw
+    const lastStroke = strokes.pop();
+    redoStack.push(lastStroke!);
+    canvas.dispatchEvent(new Event("drawing-changed"));
   }
 });
 
-// Redo button functionality
 redoButton.addEventListener("click", () => {
   if (redoStack.length > 0) {
-    const strokeToRedo = redoStack.pop(); // Remove from redo stack
-    strokes.push(strokeToRedo!); // Add it back to the strokes array
-    canvas.dispatchEvent(new Event("drawing-changed")); // Redraw
+    const strokeToRedo = redoStack.pop();
+    strokes.push(strokeToRedo!);
+    canvas.dispatchEvent(new Event("drawing-changed"));
   }
 });
 
-// Update the currentThickness for better user experience
-const thinMarkerThickness = 4; // Change to a thicker line for the thin marker
-const thickMarkerThickness = 8; // Change to a thicker line for the thick marker
+// Add description for the slider
+const sliderLabel = document.createElement("label");
+sliderLabel.innerText = "Adjust Marker Color Hue:";
+app.appendChild(sliderLabel);
 
-// Adding marker tool buttons for thin and thick markers
+const slider = document.createElement("input");
+slider.type = "range";
+slider.min = "0";
+slider.max = "360";
+slider.value = "0";
+app.appendChild(slider);
+
+slider.addEventListener("input", (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  currentColorHue = parseInt(target.value, 10);
+});
+
 const thinMarkerButton = document.createElement("button");
 thinMarkerButton.innerText = "Thin Marker";
-thinMarkerButton.id = "thin-marker-btn";
 app.appendChild(thinMarkerButton);
 
 const thickMarkerButton = document.createElement("button");
 thickMarkerButton.innerText = "Thick Marker";
-thickMarkerButton.id = "thick-marker-btn";
 app.appendChild(thickMarkerButton);
 
-// Function to select the thin marker
 thinMarkerButton.addEventListener("click", () => {
-  currentThickness = thinMarkerThickness; // Set thickness for thin marker
-  currentSticker = null; // Disable sticker mode
-  selectTool(thinMarkerButton); // Update CSS to show it's selected
+  currentThickness = 4;
+  currentSticker = null;
+  selectTool(thinMarkerButton);
 });
 
-// Function to select the thick marker
 thickMarkerButton.addEventListener("click", () => {
-  currentThickness = thickMarkerThickness; // Set thickness for thick marker
-  currentSticker = null; // Disable sticker mode
-  selectTool(thickMarkerButton); // Update CSS to show it's selected
+  currentThickness = 8;
+  currentSticker = null;
+  selectTool(thickMarkerButton);
 });
 
-
-
-// Helper function to apply the selectedTool class to the active tool
 function selectTool(selectedButton: HTMLButtonElement) {
-  // Remove the selectedTool class from all buttons
   thinMarkerButton.classList.remove("selectedTool");
   thickMarkerButton.classList.remove("selectedTool");
-
-  // Add the selectedTool class to the currently selected button
   selectedButton.classList.add("selectedTool");
 }
 
-// Stickers preview helper function
 function selectStickerTool(stickerButton: HTMLButtonElement, sticker: string) {
-  // Reset tool preview
   currentSticker = sticker;
   toolPreview = null;
-
-  // Remove the selectedTool class from marker buttons
   thinMarkerButton.classList.remove("selectedTool");
   thickMarkerButton.classList.remove("selectedTool");
-
-  // Add the selectedTool class to the selected sticker button
   stickerButton.classList.add("selectedTool");
 }
 
-// Define an array to hold sticker emojis
 const initialStickers = ["🌟", "🎈", "🍀"];
-let stickers = [...initialStickers]; // Spread operator to easily reset
+let stickers = [...initialStickers];
 
-// Helper function to update sticker buttons
 function updateStickerButtons() {
-  // Clear existing sticker buttons
   document.querySelectorAll(".sticker-btn").forEach((btn) => btn.remove());
 
-  // Add buttons for each sticker
   stickers.forEach((sticker) => {
     const stickerButton = document.createElement("button");
     stickerButton.innerText = sticker;
-    stickerButton.className = "sticker-btn"; // Use a class name for easy removal
+    stickerButton.className = "sticker-btn";
     stickerButton.addEventListener("click", () => {
       selectStickerTool(stickerButton, sticker);
     });
@@ -272,17 +243,15 @@ function updateStickerButtons() {
   });
 }
 
-// Initialize sticker buttons
 updateStickerButtons();
 
-// Add custom sticker creation functionality
 const customStickerButton = document.createElement("button");
 customStickerButton.innerText = "Add Custom Sticker";
 customStickerButton.addEventListener("click", () => {
   const customSticker = prompt("Enter custom sticker text:", "🧽");
   if (customSticker) {
-    stickers.push(customSticker); // Add new sticker to the array
-    updateStickerButtons(); // Refresh buttons
+    stickers.push(customSticker);
+    updateStickerButtons();
   }
 });
 app.appendChild(customStickerButton);
