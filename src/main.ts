@@ -20,14 +20,14 @@ app.appendChild(canvas);
 // Get the canvas context to draw
 const ctx = canvas.getContext("2d")!;
 
-// Initialize the arrays to store strokes and redoStack (each stroke is a Drawable object)
+// Initialize the arrays to store strokes and the redoStack (each stroke is a Drawable object)
 let strokes: Drawable[] = [];
 let redoStack: Drawable[] = [];
 
 let isDrawing = false;
 let currentDrawable: Drawable | null = null;
 let toolPreview: Drawable | null = null; // Global variable for tool preview
-let currentSticker: string | null = null; // Global variable to track if sticker is selected
+let currentSticker: string | null = null; // Global variable to track if a sticker is selected
 
 // Global variable to store the current marker thickness
 let currentThickness = 2; // Default to "thin"
@@ -141,7 +141,7 @@ canvas.addEventListener("mouseout", stopDrawing);
 
 // Redraw the canvas whenever the 'drawing-changed' event is triggered
 canvas.addEventListener("drawing-changed", () => {
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas before redrawing
 
   // Redraw each stroke
   strokes.forEach((drawable) => {
@@ -245,13 +245,38 @@ function selectStickerTool(stickerButton: HTMLButtonElement, sticker: string) {
   stickerButton.classList.add("selectedTool");
 }
 
-// Adding sticker buttons for three different emojis
-const stickers = ["🌟", "🎈", "🍀"];
-stickers.forEach((sticker) => {
-  const stickerButton = document.createElement("button");
-  stickerButton.innerText = sticker;
-  stickerButton.addEventListener("click", () => {
-    selectStickerTool(stickerButton, sticker); // Select the sticker tool
+// Define an array to hold sticker emojis
+const initialStickers = ["🌟", "🎈", "🍀"];
+let stickers = [...initialStickers]; // Spread operator to easily reset
+
+// Helper function to update sticker buttons
+function updateStickerButtons() {
+  // Clear existing sticker buttons
+  document.querySelectorAll(".sticker-btn").forEach((btn) => btn.remove());
+
+  // Add buttons for each sticker
+  stickers.forEach((sticker) => {
+    const stickerButton = document.createElement("button");
+    stickerButton.innerText = sticker;
+    stickerButton.className = "sticker-btn"; // Use a class name for easy removal
+    stickerButton.addEventListener("click", () => {
+      selectStickerTool(stickerButton, sticker);
+    });
+    app.appendChild(stickerButton);
   });
-  app.appendChild(stickerButton);
+}
+
+// Initialize sticker buttons
+updateStickerButtons();
+
+// Add custom sticker creation functionality
+const customStickerButton = document.createElement("button");
+customStickerButton.innerText = "Add Custom Sticker";
+customStickerButton.addEventListener("click", () => {
+  const customSticker = prompt("Enter custom sticker text:", "🧽");
+  if (customSticker) {
+    stickers.push(customSticker); // Add new sticker to the array
+    updateStickerButtons(); // Refresh buttons
+  }
 });
+app.appendChild(customStickerButton);
