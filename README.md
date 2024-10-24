@@ -15,7 +15,7 @@ The application offers high-resolution export functionality and includes a modal
 
 ## Demo 🎥
 
-Check out the live demo of Sticker Sketchpad [here](#).
+Check out the live demo of Sticker Sketchpad [here](https://rahazaman.github.io/cmpm-121-demo-2/).
 
 ## Usage 🖊️
 
