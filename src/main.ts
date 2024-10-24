@@ -37,6 +37,21 @@ interface Drawable {
   drag?(x: number, y: number): void;
 }
 
+// Create a modal dialog for export options
+const exportDialog = document.createElement("dialog");
+exportDialog.innerHTML = `
+  <form method="dialog">
+    <h2>Export Options</h2>
+    <label><input type="radio" name="bg" value="white" checked> White Background</label><br>
+    <label><input type="radio" name="bg" value="transparent"> Transparent Background</label><br>
+    <menu>
+      <button id="export-cancel">Cancel</button>
+      <button id="export-confirm" value="default">Export</button>
+    </menu>
+  </form>
+`;
+document.body.appendChild(exportDialog);
+
 function createMarkerLine(initialX: number, initialY: number, thickness: number, hue: number): Drawable {
   const points = [{ x: initialX, y: initialY }];
   const color = `hsl(${hue}, 100%, 40%)`; // HSL color model for the marker
@@ -123,6 +138,7 @@ function updateToolPreview(event: MouseEvent) {
   canvas.dispatchEvent(new Event("drawing-changed"));
 }
 
+// Mouse events
 canvas.addEventListener("mousedown", startDrawing);
 canvas.addEventListener("mousemove", (event) => {
   draw(event);
@@ -131,6 +147,7 @@ canvas.addEventListener("mousemove", (event) => {
 canvas.addEventListener("mouseup", stopDrawing);
 canvas.addEventListener("mouseout", stopDrawing);
 
+// Redraw the canvas
 canvas.addEventListener("drawing-changed", () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   strokes.forEach((drawable) => {
@@ -175,9 +192,18 @@ redoButton.addEventListener("click", () => {
   }
 });
 
+// Create a container for the slider
+const sliderContainer = document.createElement("div");
+sliderContainer.style.display = "flex";
+sliderContainer.style.flexDirection = "column";
+sliderContainer.style.alignItems = "center"; // Center the slider and label
+app.appendChild(sliderContainer);
+
 // Add description for the slider
 const sliderLabel = document.createElement("label");
-sliderLabel.innerText = "Adjust Marker Color Hue:";
+sliderLabel.innerText = "Adjust Marker Color:";
+sliderLabel.style.color = "#000000";
+sliderLabel.style.fontWeight = "bold";
 app.appendChild(sliderLabel);
 
 const slider = document.createElement("input");
@@ -256,31 +282,54 @@ customStickerButton.addEventListener("click", () => {
 });
 app.appendChild(customStickerButton);
 
-// Add an export button
+// Export button to open the modal
 const exportButton = document.createElement("button");
 exportButton.innerText = "Export";
-exportButton.id = "export-btn";
 app.appendChild(exportButton);
 
-// Function to handle the export functionality
 exportButton.addEventListener("click", () => {
-  // Create a new canvas element
+  exportDialog.showModal();
+});
+
+// Handle export confirmation
+exportDialog.querySelector("#export-confirm")?.addEventListener("click", () => {
+  const bgValue = (document.querySelector('input[name="bg"]:checked') as HTMLInputElement).value;
+  exportImage(bgValue === "white");
+});
+
+// Export function with background option
+function exportImage(withWhiteBackground: boolean) {
   const exportCanvas = document.createElement("canvas");
-  exportCanvas.width = 1024;  // High-resolution width
-  exportCanvas.height = 1024; // High-resolution height
+  exportCanvas.width = canvas.width;
+  exportCanvas.height = canvas.height;
   const exportCtx = exportCanvas.getContext("2d")!;
 
-  // Scale the context so that the drawing fills the new canvas
-  exportCtx.scale(4, 4); // Scale by a factor of 4 to fill the 1024x1024 canvas
+  // Fill with white if requested, otherwise leave it transparent
+  if (withWhiteBackground) {
+    exportCtx.fillStyle = "#ffffff";
+    exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+  }
 
-  // Execute all items on the display list against the new canvas context
   strokes.forEach((drawable) => {
-    drawable.display(exportCtx); // Use the display method to draw each stroke
+    drawable.display(exportCtx);
   });
 
-  // Trigger a file download with the contents of this canvas as a PNG file
   const anchor = document.createElement("a");
   anchor.href = exportCanvas.toDataURL("image/png");
   anchor.download = "sketchpad.png";
   anchor.click();
-});
+}
+
+// Create a container for the buttons
+const buttonsContainer = document.createElement("div");
+buttonsContainer.className = "buttons-container"; // Apply flexbox styles
+app.appendChild(buttonsContainer);
+
+// Add buttons to this container
+buttonsContainer.appendChild(clearButton);
+buttonsContainer.appendChild(undoButton);
+buttonsContainer.appendChild(redoButton);
+buttonsContainer.appendChild(thinMarkerButton);
+buttonsContainer.appendChild(thickMarkerButton);
+buttonsContainer.appendChild(customStickerButton);
+buttonsContainer.appendChild(exportButton);

@@ -1,5 +1,5 @@
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Courier New', monospace; /* Updated to Courier New */
   line-height: 1.5;
   font-weight: 400;
 
@@ -20,14 +20,15 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background-color: #242424;
+  background-color: #D3D3D3;
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
   margin-bottom: 20px;
-  color: #ffffff;
+  color: black;
+  text-align: center;
 }
 
 #app {
@@ -84,6 +85,22 @@ button:hover {
 
 .sticker-btn:hover {
   transform: scale(1.1); /* Slight scale effect on hover */
+}
+
+.buttons-container {
+  display: flex;
+  flex-wrap: wrap; /* Allow buttons to wrap if there's not enough space */
+  justify-content: center; /* Center align the buttons */
+  margin-top: 20px;
+}
+
+.label {
+  margin-bottom: 10px;
+  display: block;
+}
+
+input[type="range"] {
+  margin-top: 10px;
 }
 
 @media (prefers-color-scheme: light) {
