@@ -160,7 +160,6 @@ canvas.addEventListener("drawing-changed", () => {
 
 const clearButton = document.createElement("button");
 clearButton.innerText = "Clear";
-app.appendChild(clearButton);
 
 clearButton.addEventListener("click", () => {
   strokes = [];
@@ -170,11 +169,9 @@ clearButton.addEventListener("click", () => {
 
 const undoButton = document.createElement("button");
 undoButton.innerText = "Undo";
-app.appendChild(undoButton);
 
 const redoButton = document.createElement("button");
 redoButton.innerText = "Redo";
-app.appendChild(redoButton);
 
 undoButton.addEventListener("click", () => {
   if (strokes.length > 0) {
@@ -220,11 +217,9 @@ slider.addEventListener("input", (event: Event) => {
 
 const thinMarkerButton = document.createElement("button");
 thinMarkerButton.innerText = "Thin Marker";
-app.appendChild(thinMarkerButton);
 
 const thickMarkerButton = document.createElement("button");
 thickMarkerButton.innerText = "Thick Marker";
-app.appendChild(thickMarkerButton);
 
 thinMarkerButton.addEventListener("click", () => {
   currentThickness = 4;
@@ -280,12 +275,10 @@ customStickerButton.addEventListener("click", () => {
     updateStickerButtons();
   }
 });
-app.appendChild(customStickerButton);
 
 // Export button to open the modal
 const exportButton = document.createElement("button");
 exportButton.innerText = "Export";
-app.appendChild(exportButton);
 
 exportButton.addEventListener("click", () => {
   exportDialog.showModal();
