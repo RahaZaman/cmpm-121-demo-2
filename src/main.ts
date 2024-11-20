@@ -17,6 +17,65 @@ canvas.height = 256;
 canvas.id = "sketchpad"; // Set an id for targeting in CSS
 app.appendChild(canvas);
 
+// Create overlay element for instructions
+const overlay = document.createElement("div");
+overlay.className = "overlay";
+overlay.innerHTML = `
+  <div class="overlay-content">
+    <h2>Welcome to ${APP_NAME}!</h2>
+    <p>Here's how to get started:</p>
+    <ul>
+      <li>Use the "Thin Marker" and "Thick Marker" buttons to draw lines of different thicknesses.</li>
+      <li>Select stickers to place fun icons on the sketchpad.</li>
+      <li>Click "Undo" or "Redo" to revert changes.</li>
+      <li>Use the slider to change the marker color.</li>
+      <li>Export your sketch using the "Export" button.</li>
+    </ul>
+    <button id="close-overlay">Got it!</button>
+  </div>
+`;
+document.body.appendChild(overlay);
+
+// Style for overlay
+const style = document.createElement("style");
+style.innerHTML = `
+  .overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  .overlay-content {
+    text-align: center;
+    max-width: 400px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.9);
+    color: black;
+    border-radius: 10px;
+  }
+  #close-overlay {
+    margin-top: 15px;
+    padding: 10px 15px;
+    cursor: pointer;
+  }
+`;
+document.head.appendChild(style);
+
+// Event listener to close the overlay
+const closeOverlayButton = document.getElementById("close-overlay");
+closeOverlayButton?.addEventListener("click", () => {
+  overlay.style.display = "none";
+});
+
+
+
 // Get the canvas context to draw
 const ctx = canvas.getContext("2d")!;
 
